@@ -1,0 +1,12 @@
+services:
+  postgres_patroni:
+    image: patroni/patroni:latest
+    container_name: pg_NODO_NOMBRE      # <-- cambiar por: pg_node1 / pg_node2 / pg_node3
+    network_mode: host
+    volumes:
+      - ../config/patroni/patroni.yml:/etc/patroni.yml
+      - pgdata_NODO_NOMBRE:/data/patroni
+    command: patroni /etc/patroni.yml
+
+volumes:
+  pgdata_NODO_NOMBRE:

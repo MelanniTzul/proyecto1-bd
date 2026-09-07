@@ -1,0 +1,43 @@
+scope: cluster_ha
+namespace: /db/
+name: node1          # <-- cambiar por: node1 / node2 / node3
+
+restapi:
+  listen: 0.0.0.0:8008
+  connect_address: 100.120.213.18     # <-- IP de Tailscale de esta persona
+
+etcd3:
+  hosts:
+    - IP_NODO_1:2379    # <-- IP de Tailscale del compañero con Nodo 1
+    - IP_NODO_2:2379    # <-- IP de Tailscale del compañero con Nodo 2
+    - IP_NODO_3:2379    # <-- IP de Tailscale del compañero con Nodo 3
+
+bootstrap:
+  dcs:
+    ttl: 30
+    loop_wait: 10
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576
+    postgresql:
+      use_pg_rewind: true
+  initdb:
+    - encoding: UTF8
+    - data-checksums
+
+postgresql:
+  listen: 0.0.0.0:5432
+  connect_address: 100.120.213.18     # <-- IP de Tailscale de esta persona
+  data_dir: /data/patroni
+  authentication:
+    replication:
+      username: replicador
+      password: replica_pass_2026
+    superuser:
+      username: postgres
+      password: super_pass_2026
+
+tags:
+  nofailover: false
+  noloadbalance: false
+  clonefrom: false
+  nosync: false

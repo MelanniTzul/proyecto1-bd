@@ -7,7 +7,7 @@ la configuracion de un nodo sobre otro.
 | --- | --- | --- | --- |
 | Nodo 1 | `config/patroni/nodes/node1.yml` | `100.120.213.18` | Lider inicial y candidato a lider |
 | Nodo 2 | `config/patroni/nodes/node2.yml` | `100.87.77.76` | Replica sincronica y candidato a lider |
-| Nodo 3 | `config/patroni/nodes/node3.yml` | Pendiente | Replica asincronica de solo lectura |
+| Nodo 3 | `config/patroni/nodes/node3.yml` | `100.108.44.95` | Replica asincronica de solo lectura |
 
 ## Que modifica cada integrante
 

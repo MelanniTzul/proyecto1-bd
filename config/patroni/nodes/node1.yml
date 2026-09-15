@@ -12,7 +12,7 @@ etcd3:
   hosts:
     - 100.120.213.18:2379
     - 100.87.77.76:2379
-    - IP_NODO_3:2379 # Reemplazar cuando se conozca la IP de Nodo 3.
+    - 100.108.44.95:2379
 
 bootstrap:
   dcs:

@@ -2,8 +2,8 @@
 
 ## Antes de iniciar
 
-1. Definir la IP de Nodo 3 y reemplazar `IP_NODO_3` en `config/patroni/nodes/`
-   y `config/etcd/` de los tres nodos.
+1. Confirmar que las tres direcciones de Tailscale configuradas sean las de Nodo 1,
+   Nodo 2 y Nodo 3 antes de iniciar etcd por primera vez.
 2. Crear `config/patroni/.env` desde `.env.example` en cada host, usando las
    mismas credenciales de prueba. No subirlo a Git.
 3. Verificar Tailscale entre los tres hosts y abrir los puertos 2379, 2380, 5432,

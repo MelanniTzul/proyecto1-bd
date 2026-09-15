@@ -16,8 +16,8 @@ Cada integrante modifica solo el archivo de su nodo:
 - `name` debe coincidir con el nombre del archivo: `node1`, `node2` o `node3`.
 - `restapi.connect_address` usa la IP propia y el puerto `8008`.
 - `postgresql.connect_address` usa la IP propia y el puerto `5432`.
-- Cuando se asigne la IP de Nodo 3, se actualiza **la misma lista** `etcd3.hosts`
-  en los tres archivos, incluyendo el endpoint `:2379`.
+- La lista `etcd3.hosts` debe incluir las tres IP de Tailscale con el endpoint
+  `:2379` y mantenerse identica en los tres archivos.
 
 Los valores `scope`, `namespace`, `bootstrap.dcs` y la lista completa de etcd son
 compartidos: deben mantenerse iguales en los tres archivos. No se deben cambiar
@@ -45,8 +45,7 @@ persistentes no se comparten ni se sobrescriben entre nodos.
 
 ## Antes de iniciar el cluster
 
-1. Completar la IP de Nodo 3 en los tres archivos.
-2. Confirmar que etcd se ejecuta en los tres hosts y escucha en el puerto `2379`.
-3. Definir la misma version de la imagen Patroni/PostgreSQL para los tres hosts;
+1. Confirmar que etcd se ejecuta en los tres hosts y escucha en el puerto `2379`.
+2. Definir la misma version de la imagen Patroni/PostgreSQL para los tres hosts;
    por ahora el Compose conserva la etiqueta existente `latest` y no debe usarse
    como version final.

@@ -10,6 +10,8 @@
    8008, 9100 y 9187 dentro de la red privada.
 4. Los tres integrantes deben iniciar etcd y Patroni en una misma sesión para la
    primera creación del clúster.
+5. La primera vez, Compose construirá la imagen local con PostgreSQL `16.15` y
+   Patroni `4.1.5`. Los tres nodos deben usar esa misma versión.
 
 ## Nodo de base de datos
 

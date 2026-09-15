@@ -10,7 +10,10 @@ services:
     restart: unless-stopped
 
   postgres_patroni:
-    image: patroni/patroni:latest
+    image: proyecto1-patroni:pg16.15-patroni4.1.5
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.patroni
     container_name: pg_${NODE_NAME?Defina NODE_NAME como node1, node2 o node3}
     network_mode: host
     volumes:

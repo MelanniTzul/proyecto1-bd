@@ -46,6 +46,6 @@ persistentes no se comparten ni se sobrescriben entre nodos.
 ## Antes de iniciar el cluster
 
 1. Confirmar que etcd se ejecuta en los tres hosts y escucha en el puerto `2379`.
-2. Definir la misma version de la imagen Patroni/PostgreSQL para los tres hosts;
-   por ahora el Compose conserva la etiqueta existente `latest` y no debe usarse
-   como version final.
+2. Construir o descargar la misma imagen en los tres hosts. El Compose construye
+   localmente `proyecto1-patroni:pg16.15-patroni4.1.5`, basada en PostgreSQL
+   `16.15` con Patroni `4.1.5`; no se usa la etiqueta mutable `latest`.

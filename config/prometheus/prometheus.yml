@@ -1,5 +1,5 @@
 # Prometheus para el clúster PostgreSQL/Patroni.
-# Nodo 3 permanece comentado hasta conocer su IP de Tailscale.
+# Los tres nodos se monitorean mediante sus direcciones de Tailscale.
 
 global:
   scrape_interval: 15s
@@ -11,7 +11,7 @@ scrape_configs:
       - targets:
           - 100.120.213.18:9187 # postgres_exporter - Nodo 1
           - 100.87.77.76:9187   # postgres_exporter - Nodo 2
-          # - IP_NODO_3:9187    # postgres_exporter - Nodo 3
+          - 100.108.44.95:9187   # postgres_exporter - Nodo 3
         labels:
           cluster: cluster_ha
 
@@ -20,6 +20,6 @@ scrape_configs:
       - targets:
           - 100.120.213.18:9100 # node_exporter - Nodo 1
           - 100.87.77.76:9100   # node_exporter - Nodo 2
-          # - IP_NODO_3:9100    # node_exporter - Nodo 3
+          - 100.108.44.95:9100   # node_exporter - Nodo 3
         labels:
           cluster: cluster_ha

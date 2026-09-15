@@ -1,18 +1,18 @@
-# Plantilla local de Nodo 3. Completar su IP antes de iniciar el cluster.
+# Configuracion local de Nodo 3. Solo cambie este archivo desde el host de Nodo 3.
 scope: cluster_ha
 namespace: /db/
 name: node3
 
 restapi:
   listen: 0.0.0.0:8008
-  connect_address: IP_NODO_3:8008
+  connect_address: 100.108.44.95:8008
 
 etcd3:
   # Esta lista debe ser identica en los tres nodos.
   hosts:
     - 100.120.213.18:2379
     - 100.87.77.76:2379
-    - IP_NODO_3:2379
+    - 100.108.44.95:2379
 
 bootstrap:
   dcs:
@@ -28,7 +28,7 @@ bootstrap:
 
 postgresql:
   listen: 0.0.0.0:5432
-  connect_address: IP_NODO_3:5432
+  connect_address: 100.108.44.95:5432
   data_dir: /data/patroni
 
 tags:

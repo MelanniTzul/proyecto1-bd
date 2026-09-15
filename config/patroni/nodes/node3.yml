@@ -20,6 +20,9 @@ bootstrap:
     loop_wait: 10
     retry_timeout: 10
     maximum_lag_on_failover: 1048576
+    synchronous_mode: true
+    synchronous_mode_strict: false
+    synchronous_node_count: 1
     postgresql:
       use_pg_rewind: true
   initdb:
@@ -30,6 +33,10 @@ postgresql:
   listen: 0.0.0.0:5432
   connect_address: IP_NODO_3:5432
   data_dir: /data/patroni
+  pg_hba:
+    - local all all trust
+    - host replication replicador 100.64.0.0/10 scram-sha-256
+    - host all all 100.64.0.0/10 scram-sha-256
 
 tags:
   # Nodo 3 es la replica asincrona de solo lectura y no debe promocionarse.

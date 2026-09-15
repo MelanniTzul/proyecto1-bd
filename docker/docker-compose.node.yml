@@ -1,4 +1,14 @@
 services:
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.9
+    container_name: etcd_${NODE_NAME?Defina NODE_NAME como node1, node2 o node3}
+    network_mode: host
+    env_file:
+      - ../config/etcd/${NODE_NAME?Defina NODE_NAME como node1, node2 o node3}.env
+    volumes:
+      - etcddata:/etcd-data
+    restart: unless-stopped
+
   postgres_patroni:
     image: patroni/patroni:latest
     container_name: pg_${NODE_NAME?Defina NODE_NAME como node1, node2 o node3}
@@ -7,12 +17,40 @@ services:
       - ../config/patroni/nodes/${NODE_NAME?Defina NODE_NAME como node1, node2 o node3}.yml:/etc/patroni.yml:ro
       - pgdata:/data/patroni
     command: patroni /etc/patroni.yml
+    depends_on:
+      - etcd
     environment:
       PATRONI_SUPERUSER_USERNAME: postgres
       PATRONI_SUPERUSER_PASSWORD: ${PATRONI_SUPERUSER_PASSWORD}
       PATRONI_REPLICATION_USERNAME: replicador
       PATRONI_REPLICATION_PASSWORD: ${PATRONI_REPLICATION_PASSWORD}
+    restart: unless-stopped
+
+  postgres_exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: postgres_exporter_${NODE_NAME?Defina NODE_NAME como node1, node2 o node3}
+    network_mode: host
+    depends_on:
+      - postgres_patroni
+    environment:
+      DATA_SOURCE_URI: 127.0.0.1:5432/postgres?sslmode=disable
+      DATA_SOURCE_USER: postgres
+      DATA_SOURCE_PASS: ${PATRONI_SUPERUSER_PASSWORD}
+    restart: unless-stopped
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:v1.8.2
+    container_name: node_exporter_${NODE_NAME?Defina NODE_NAME como node1, node2 o node3}
+    network_mode: host
+    pid: host
+    command:
+      - --path.rootfs=/host
+    volumes:
+      - /:/host:ro,rslave
+    restart: unless-stopped
 
 volumes:
   pgdata:
     name: pgdata_${NODE_NAME?Defina NODE_NAME como node1, node2 o node3}
+  etcddata:
+    name: etcddata_${NODE_NAME?Defina NODE_NAME como node1, node2 o node3}

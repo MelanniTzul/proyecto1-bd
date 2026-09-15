@@ -1,0 +1,39 @@
+# Plantilla local de Nodo 3. Completar su IP antes de iniciar el cluster.
+scope: cluster_ha
+namespace: /db/
+name: node3
+
+restapi:
+  listen: 0.0.0.0:8008
+  connect_address: IP_NODO_3:8008
+
+etcd3:
+  # Esta lista debe ser identica en los tres nodos.
+  hosts:
+    - 100.120.213.18:2379
+    - 100.87.77.76:2379
+    - IP_NODO_3:2379
+
+bootstrap:
+  dcs:
+    ttl: 30
+    loop_wait: 10
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576
+    postgresql:
+      use_pg_rewind: true
+  initdb:
+    - encoding: UTF8
+    - data-checksums
+
+postgresql:
+  listen: 0.0.0.0:5432
+  connect_address: IP_NODO_3:5432
+  data_dir: /data/patroni
+
+tags:
+  # Nodo 3 es la replica asincrona de solo lectura y no debe promocionarse.
+  nofailover: true
+  noloadbalance: false
+  clonefrom: false
+  nosync: true

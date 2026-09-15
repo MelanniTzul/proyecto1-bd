@@ -1,0 +1,38 @@
+# Configuracion local de Nodo 1. Solo cambie este archivo desde el host de Nodo 1.
+scope: cluster_ha
+namespace: /db/
+name: node1
+
+restapi:
+  listen: 0.0.0.0:8008
+  connect_address: 100.120.213.18:8008
+
+etcd3:
+  # Esta lista debe ser identica en los tres nodos.
+  hosts:
+    - 100.120.213.18:2379
+    - 100.87.77.76:2379
+    - IP_NODO_3:2379 # Reemplazar cuando se conozca la IP de Nodo 3.
+
+bootstrap:
+  dcs:
+    ttl: 30
+    loop_wait: 10
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576
+    postgresql:
+      use_pg_rewind: true
+  initdb:
+    - encoding: UTF8
+    - data-checksums
+
+postgresql:
+  listen: 0.0.0.0:5432
+  connect_address: 100.120.213.18:5432
+  data_dir: /data/patroni
+
+tags:
+  nofailover: false
+  noloadbalance: false
+  clonefrom: false
+  nosync: false

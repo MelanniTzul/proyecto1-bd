@@ -1,12 +1,18 @@
 services:
   postgres_patroni:
     image: patroni/patroni:latest
-    container_name: pg_NODO_NOMBRE      # <-- cambiar por: pg_node1 / pg_node2 / pg_node3
+    container_name: pg_${NODE_NAME?Defina NODE_NAME como node1, node2 o node3}
     network_mode: host
     volumes:
-      - ../config/patroni/patroni.yml:/etc/patroni.yml
-      - pgdata_NODO_NOMBRE:/data/patroni
+      - ../config/patroni/nodes/${NODE_NAME?Defina NODE_NAME como node1, node2 o node3}.yml:/etc/patroni.yml:ro
+      - pgdata:/data/patroni
     command: patroni /etc/patroni.yml
+    environment:
+      PATRONI_SUPERUSER_USERNAME: postgres
+      PATRONI_SUPERUSER_PASSWORD: ${PATRONI_SUPERUSER_PASSWORD}
+      PATRONI_REPLICATION_USERNAME: replicador
+      PATRONI_REPLICATION_PASSWORD: ${PATRONI_REPLICATION_PASSWORD}
 
 volumes:
-  pgdata_NODO_NOMBRE:
+  pgdata:
+    name: pgdata_${NODE_NAME?Defina NODE_NAME como node1, node2 o node3}

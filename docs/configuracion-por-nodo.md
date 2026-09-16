@@ -15,7 +15,9 @@ Cada integrante modifica solo el archivo de su nodo:
 
 - `name` debe coincidir con el nombre del archivo: `node1`, `node2` o `node3`.
 - `restapi.connect_address` usa la IP propia y el puerto `8008`.
-- `postgresql.connect_address` usa la IP propia y el puerto `5432`.
+- `postgresql.connect_address` usa la IP y el puerto propios: Nodo 1 usa `5432`,
+  Nodo 2 usa `5433` y Nodo 3 usa `5434`. Nodo 2 y Nodo 3 evitan así el puerto
+  `5432`, que ya está ocupado por PostgreSQL local en esos hosts.
 - La lista `etcd3.hosts` debe incluir las tres IP de Tailscale con el endpoint
   `:2379` y mantenerse identica en los tres archivos.
 
@@ -28,6 +30,9 @@ desde un solo host sin avisar al equipo.
 Las contrasenas no se guardan en los YAML. Cada host crea
 `config/patroni/.env` a partir de `.env.example` con las mismas dos contrasenas
 acordadas por el equipo. Ese archivo esta ignorado por Git.
+
+Los puertos de `postgres_exporter` están versionados sin credenciales en
+`config/postgres-exporter/node1.env`, `node2.env` y `node3.env`.
 
 ## Iniciar un nodo
 

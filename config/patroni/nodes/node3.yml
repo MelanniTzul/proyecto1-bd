@@ -30,8 +30,8 @@ bootstrap:
     - data-checksums
 
 postgresql:
-  listen: 0.0.0.0:5432
-  connect_address: 100.108.44.95:5432
+  listen: 0.0.0.0:5434
+  connect_address: 100.108.44.95:5434
   data_dir: /data/patroni
   pg_hba:
     - local all all trust

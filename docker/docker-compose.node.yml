@@ -35,8 +35,9 @@ services:
     network_mode: host
     depends_on:
       - postgres_patroni
+    env_file:
+      - ../config/postgres-exporter/${NODE_NAME?Defina NODE_NAME como node1, node2 o node3}.env
     environment:
-      DATA_SOURCE_URI: 127.0.0.1:5432/postgres?sslmode=disable
       DATA_SOURCE_USER: postgres
       DATA_SOURCE_PASS: ${PATRONI_SUPERUSER_PASSWORD}
     restart: unless-stopped

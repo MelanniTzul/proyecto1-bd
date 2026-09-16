@@ -7,5 +7,6 @@ set -eu
 data_dir="${PATRONI_POSTGRESQL_DATA_DIR:-/data/patroni}"
 mkdir -p "$data_dir"
 chown postgres:postgres "$data_dir"
+chmod 700 "$data_dir"
 
 exec gosu postgres "$@"

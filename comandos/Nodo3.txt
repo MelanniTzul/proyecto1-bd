@@ -1,0 +1,118 @@
+#==================================================
+# CONFIGURACIÓN Y CONECTIVIDAD DEL NODO 3
+#==================================================
+
+#Mostrar dispositivos conectados por Tailscale
+tailscale status
+
+#Comprobar conexión con el Nodo 1
+tailscale ping 100.120.213.18
+
+#Comprobar conexión con el Nodo 2
+tailscale ping 100.87.77.76
+
+#Comprobar conexión con el Nodo 3
+tailscale ping 100.108.44.95
+
+#Actualizar el repositorio
+git status
+git pull origin main
+
+#Crear el archivo local de credenciales
+cp config/patroni/.env.example config/patroni/.env
+nano config/patroni/.env
+
+
+#==================================================
+# CONSTRUCCIÓN DE LA IMAGEN EN EL NODO 3
+#==================================================
+
+#Construir imagen en el Nodo 3
+NODE_NAME=node3 docker compose --env-file config/patroni/.env -f docker/docker-compose.node.yml build
+
+#Comprobar versión de PostgreSQL
+docker run --rm --entrypoint postgres proyecto1-patroni:pg16.15-patroni4.1.5 --version
+
+#Comprobar versión de Patroni
+docker run --rm --entrypoint patroni proyecto1-patroni:pg16.15-patroni4.1.5 --version
+
+
+#==================================================
+# INICIO DE ETCD EN EL NODO 3
+#==================================================
+
+#Iniciar etcd en el Nodo 3
+NODE_NAME=node3 docker compose --env-file config/patroni/.env -f docker/docker-compose.node.yml up -d etcd
+
+
+#==================================================
+# INICIO DE PATRONI Y EXPORTERS EN EL NODO 3
+#==================================================
+
+#Iniciar servicios del Nodo 3
+NODE_NAME=node3 docker compose --env-file config/patroni/.env -f docker/docker-compose.node.yml up -d --build postgres_patroni node_exporter postgres_exporter
+
+
+#==================================================
+# VERIFICACIÓN DEL CLÚSTER DESDE EL NODO 3
+#==================================================
+
+#Mostrar el estado de Patroni desde el Nodo 3
+docker exec -it pg_node3 patronictl -c /etc/patroni.yml list
+
+#Mostrar contenedores activos en el Nodo 3
+docker ps
+
+
+#==================================================
+# ACCESO A LA CONSOLA POSTGRESQL DEL NODO 3
+#==================================================
+
+#Entrar a psql en el Nodo 3
+docker exec -it pg_node3 psql -U postgres -p 5434 -d postgres
+
+#Salir de psql
+\q
+
+
+#==================================================
+# COMPROBAR SI EL NODO 3 ES LÍDER O RÉPLICA
+#==================================================
+
+#Comprobar estado del Nodo 3
+docker exec -it pg_node3 psql -U postgres -p 5434 -d postgres -c "SELECT pg_is_in_recovery();"
+
+#Resultado:
+# f = Leader, permite escrituras
+# t = Replica, solo permite lecturas
+
+
+#==================================================
+# VERIFICAR LA REPLICACIÓN INICIADA EN EL NODO 1
+#==================================================
+
+#Comprobar la eliminación en el Nodo 3
+docker exec -it pg_node3 psql -U postgres -p 5434 -d postgres -c "SELECT * FROM clientes WHERE correo = 'replicacion@prueba.local';"
+
+
+#==================================================
+# VERIFICACIONES DE LA REPLICACIÓN INICIADA EN EL NODO 2
+# Ejecutar después de cada operación correspondiente en el Nodo 2
+#==================================================
+
+#Comprobar inserción en el Nodo 3
+docker exec -it pg_node3 psql -U postgres -p 5434 -d postgres -c "SELECT * FROM clientes WHERE correo = 'node2@prueba.local';"
+
+#Comprobar actualización en el Nodo 3
+docker exec -it pg_node3 psql -U postgres -p 5434 -d postgres -c "SELECT * FROM clientes WHERE correo = 'node2@prueba.local';"
+
+#Comprobar eliminación en el Nodo 3
+docker exec -it pg_node3 psql -U postgres -p 5434 -d postgres -c "SELECT * FROM clientes WHERE correo = 'node2@prueba.local';"
+
+
+#==================================================
+# REVISIÓN DE LOGS DEL NODO 3
+#==================================================
+
+#Mostrar los 100 logs más recientes del Nodo 3
+docker logs pg_node3 --tail 100

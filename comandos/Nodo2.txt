@@ -1,0 +1,139 @@
+#==================================================
+# CONFIGURACIÓN Y CONECTIVIDAD DEL NODO 2
+#==================================================
+
+#Mostrar dispositivos conectados por Tailscale
+tailscale status
+
+#Comprobar conexión con el Nodo 1
+tailscale ping 100.120.213.18
+
+#Comprobar conexión con el Nodo 2
+tailscale ping 100.87.77.76
+
+#Comprobar conexión con el Nodo 3
+tailscale ping 100.108.44.95
+
+#Actualizar el repositorio
+git status
+git pull origin main
+
+#Crear el archivo local de credenciales
+cp config/patroni/.env.example config/patroni/.env
+nano config/patroni/.env
+
+
+#==================================================
+# CONSTRUCCIÓN DE LA IMAGEN EN EL NODO 2
+#==================================================
+
+#Construir imagen en el Nodo 2
+NODE_NAME=node2 docker compose --env-file config/patroni/.env -f docker/docker-compose.node.yml build
+
+#Comprobar versión de PostgreSQL
+docker run --rm --entrypoint postgres proyecto1-patroni:pg16.15-patroni4.1.5 --version
+
+#Comprobar versión de Patroni
+docker run --rm --entrypoint patroni proyecto1-patroni:pg16.15-patroni4.1.5 --version
+
+
+#==================================================
+# INICIO Y VERIFICACIÓN DE ETCD EN EL NODO 2
+#==================================================
+
+#Iniciar etcd en el Nodo 2
+NODE_NAME=node2 docker compose --env-file config/patroni/.env -f docker/docker-compose.node.yml up -d etcd
+
+#Verificar salud de los tres miembros desde el Nodo 2
+docker exec -e ETCDCTL_API=3 etcd_node2 etcdctl endpoint health --endpoints=http://100.120.213.18:2379,http://100.87.77.76:2379,http://100.108.44.95:2379
+
+#Mostrar miembros del clúster etcd
+docker exec -e ETCDCTL_API=3 etcd_node2 etcdctl member list --endpoints=http://100.87.77.76:2379
+
+
+#==================================================
+# INICIO DE PATRONI Y EXPORTERS EN EL NODO 2
+#==================================================
+
+#Iniciar servicios del Nodo 2
+NODE_NAME=node2 docker compose --env-file config/patroni/.env -f docker/docker-compose.node.yml up -d --build postgres_patroni node_exporter postgres_exporter
+
+
+#==================================================
+# VERIFICACIÓN DEL CLÚSTER DESDE EL NODO 2
+#==================================================
+
+#Mostrar el estado de Patroni desde el Nodo 2
+docker exec -it pg_node2 patronictl -c /etc/patroni.yml list
+
+#Mostrar contenedores activos en el Nodo 2
+docker ps
+
+
+#==================================================
+# ACCESO A LA CONSOLA POSTGRESQL DEL NODO 2
+#==================================================
+
+#Entrar a psql en el Nodo 2
+docker exec -it pg_node2 psql -U postgres -p 5433 -d postgres
+
+#Salir de psql
+\q
+
+
+#==================================================
+# COMPROBAR SI EL NODO 2 ES LÍDER O RÉPLICA
+#==================================================
+
+#Comprobar estado del Nodo 2
+docker exec -it pg_node2 psql -U postgres -p 5433 -d postgres -c "SELECT pg_is_in_recovery();"
+
+#Resultado:
+# f = Leader, permite escrituras
+# t = Replica, solo permite lecturas
+
+
+#==================================================
+# VERIFICAR LA REPLICACIÓN INICIADA EN EL NODO 1
+#==================================================
+
+#Comprobar la eliminación en el Nodo 2
+docker exec -it pg_node2 psql -U postgres -p 5433 -d postgres -c "SELECT * FROM clientes WHERE correo = 'replicacion@prueba.local';"
+
+
+#==================================================
+# CAMBIO CONTROLADO DEL LÍDER HACIA EL NODO 2
+#==================================================
+
+#Promover el Nodo 2 mediante switchover
+docker exec -it pg_node2 patronictl -c /etc/patroni.yml switchover --leader node1 --candidate node2 --force
+
+#Confirmar que el Nodo 2 quedó como Leader
+docker exec -it pg_node2 patronictl -c /etc/patroni.yml list
+
+
+#==================================================
+# PRUEBA DE REPLICACIÓN DESDE EL NODO 2
+# Ejecutar solamente cuando el Nodo 2 sea Leader
+#==================================================
+
+#Insertar registro desde el Nodo 2
+docker exec -it pg_node2 psql -U postgres -p 5433 -d postgres -c "INSERT INTO clientes (nombre, correo, telefono) VALUES ('Prueba Node 2', 'node2@prueba.local', '5555-2222') RETURNING *;"
+
+#Actualizar registro desde el Nodo 2
+docker exec -it pg_node2 psql -U postgres -p 5433 -d postgres -c "UPDATE clientes SET telefono = '5555-9999' WHERE correo = 'node2@prueba.local' RETURNING *;"
+
+#Eliminar registro desde el Nodo 2
+docker exec -it pg_node2 psql -U postgres -p 5433 -d postgres -c "DELETE FROM clientes WHERE correo = 'node2@prueba.local' RETURNING *;"
+
+
+#==================================================
+# REVISIÓN DE LOGS Y ESTADO FINAL DESDE EL NODO 2
+#==================================================
+
+#Mostrar los 100 logs más recientes del Nodo 2
+docker logs pg_node2 --tail 100
+
+#Mostrar fecha y estado final del clúster
+date
+docker exec -it pg_node2 patronictl -c /etc/patroni.yml list

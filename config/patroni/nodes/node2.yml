@@ -35,6 +35,10 @@ postgresql:
   data_dir: /data/patroni
   pg_hba:
     - local all all trust
+    - host all postgres 127.0.0.1/32 scram-sha-256
+    - host replication replicador 127.0.0.1/32 scram-sha-256
+    - host all postgres ::1/128 scram-sha-256
+    - host replication replicador ::1/128 scram-sha-256
     - host replication replicador 100.64.0.0/10 scram-sha-256
     - host all all 100.64.0.0/10 scram-sha-256
 

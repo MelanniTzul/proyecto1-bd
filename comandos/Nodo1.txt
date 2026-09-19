@@ -135,3 +135,70 @@ docker exec -it pg_node1 psql -U postgres -p 5432 -d postgres -c "SELECT * FROM 
 
 #Mostrar los 100 logs más recientes del Nodo 1
 docker logs pg_node1 --tail 100
+
+#==================================================
+# CAIDA DE NODO 1
+#==================================================
+Hora de la caída
+date '+Inicio de falla: %Y-%m-%d %H:%M:%S %Z'
+
+Detener contenedor
+docker stop pg_node1
+
+Comprobar
+docker ps -a --filter name=pg_node1
+
+#==================================================
+# 
+#==================================================
+
+Ejecutar lectura y escritura mediante HAProxy
+
+docker exec -it pg_node1 psql -h 100.87.77.76 -p 5000 -U postgres -d postgres
+
+
+
+Comprobacion de dato creado durante la caida en fase 3
+
+SELECT nombre, correo, telefono
+  FROM clientes
+  WHERE correo = 'fase3-durante@prueba.local';
+
+Insertar un registro durante la caída de Node 2:
+
+  INSERT INTO clientes (nombre, correo, telefono)
+  VALUES ('Durante falla Node 2', 'fase4-durante@prueba.local', '5555-4001')
+  RETURNING *; 
+
+
+Actualizar registro insertado durante la caída: 
+UPDATE clientes
+  SET telefono = '5555-4999'
+  WHERE correo = 'fase4-durante@prueba.local'
+  RETURNING *;
+
+Comprobación de reintegración de node 2 desde node 1.
+
+docker exec -it pg_node1 patronictl -c /etc/patroni.yml list
+
+
+
+Nodo 1:
+
+# Caida de nodo 1.
+
+# fecha
+date '+Fase 5 - caída Node 1: %Y-%m-%d %H:%M:%S %Z'
+# detener servicio
+docker stop pg_node1
+# comprobacion
+docker ps -a --filter name=pg_node1
+
+(Debe aparecer Exited)
+
+
+# Reintregracion de nodo 1.
+date '+Inicio reintegración Node 1: %Y-%m-%d %H:%M:%S %Z'
+docker start pg_node1
+
+sleep 30 && docker exec -it pg_node2 patronictl -c /etc/patroni.yml list

@@ -159,3 +159,27 @@ SELECT *
   WHERE correo = 'fase5-recuperacion@prueba.local';
 
 
+# comprobacion de replicacion
+SELECT COUNT(*) AS clientes FROM clientes;
+
+SELECT id, nombre, correo, creado
+FROM clientes
+WHERE correo LIKE 'carga-%@prueba.local'
+ORDER BY id DESC
+LIMIT 10;
+
+#Confirmacion prueba de la replicacion
+SELECT COUNT(*)
+  FROM clientes
+  WHERE correo LIKE 'carga-20260918-201808-%@prueba.local';
+
+
+SELECT id, nombre, correo
+  FROM clientes
+  WHERE correo LIKE 'carga-%@prueba.local'
+  ORDER BY id DESC
+  LIMIT 5;
+
+# Comprobacion de solo lectura en nodo 3
+SELECT pg_is_in_recovery(), COUNT(*) FROM clientes;
+SHOW transaction_read_only;

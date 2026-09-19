@@ -15,7 +15,9 @@ show_usage() {
     '  ./scripts/ejecutar-carga.sh lectura-node3' \
     '' \
     'Variables opcionales:' \
-    '  VUS=20 DURATION=2m FAILURE_AT_SECONDS=60 PAUSE_SECONDS=0.1'
+    '  VUS=20 DURATION=2m FAILURE_AT_SECONDS=60 PAUSE_SECONDS=0.1' \
+    '  PROMETHEUS_OUTPUT=1 envia metricas a Prometheus (Node 3 por defecto)' \
+    '  K6_PROMETHEUS_RW_SERVER_URL permite cambiar el destino en otro despliegue'
 }
 
 if [ "$MODE" != 'mixta' ] && [ "$MODE" != 'lectura-node3' ]; then
@@ -64,6 +66,12 @@ printf 'Inicio: %s\n' "$(date '+%Y-%m-%d %H:%M:%S %Z')"
 printf 'Resumen JSON: %s\n' "$SUMMARY_FILE"
 
 cd "$PROJECT_DIR"
-"$K6_BIN" run --summary-export "$SUMMARY_FILE" "$SCRIPT"
+if [ "${PROMETHEUS_OUTPUT:-0}" = '1' ]; then
+  export K6_PROMETHEUS_RW_SERVER_URL=${K6_PROMETHEUS_RW_SERVER_URL:-http://100.108.44.95:9090/api/v1/write}
+  export K6_PROMETHEUS_RW_TREND_STATS='avg,p(95)'
+  "$K6_BIN" run --out experimental-prometheus-rw --summary-export "$SUMMARY_FILE" "$SCRIPT"
+else
+  "$K6_BIN" run --summary-export "$SUMMARY_FILE" "$SCRIPT"
+fi
 
 printf 'Fin: %s\n' "$(date '+%Y-%m-%d %H:%M:%S %Z')"

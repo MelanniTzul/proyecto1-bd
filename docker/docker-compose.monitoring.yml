@@ -3,10 +3,11 @@ services:
     image: prom/prometheus:v2.54.1
     container_name: prometheus_cluster_ha
     ports:
-      - "9090:9090"
+      - "${MONITORING_BIND_IP:?Defina MONITORING_BIND_IP en config/monitoring/.env}:9090:9090"
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
+      - --web.enable-remote-write-receiver
     volumes:
       - ../config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -16,12 +17,13 @@ services:
     image: grafana/grafana:11.1.0
     container_name: grafana_cluster_ha
     ports:
-      - "3000:3000"
+      - "${MONITORING_BIND_IP:?Defina MONITORING_BIND_IP en config/monitoring/.env}:3000:3000"
     environment:
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Defina GRAFANA_ADMIN_PASSWORD en config/monitoring/.env}
     volumes:
       - grafana_data:/var/lib/grafana
       - ../config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../config/grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - prometheus
     restart: unless-stopped

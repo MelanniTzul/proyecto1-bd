@@ -55,18 +55,46 @@ Prometheus queda en `http://HOST_MONITOREO:9090`, Grafana en
 
 ## Replicación y carga
 
-Ejecutar primero `scripts/dataset.sql` en el líder. Después ejecutar
-`scripts/pruebas-replicacion.sql` a través del puerto de escritura de HAProxy
-y verificar las consultas desde el puerto de lectura. Para generar volumen antes
-de la Fase 6, ejecutar `scripts/carga_masiva.sql` únicamente contra el líder.
+La carga inicial de la base se realiza únicamente con `scripts/dataset.sql` en
+el líder. Este archivo crea las tablas y agrega los datos semilla. Después se
+puede ejecutar `scripts/pruebas-replicacion.sql` a través del puerto de
+escritura de HAProxy y verificar los resultados desde el puerto de lectura.
 
-El script `scripts/carga.js` requiere una distribución de k6 con la extensión
-`xk6-sql` y un driver PostgreSQL. Ejemplo de variable de conexión:
+`scripts/carga_masiva.sql` es una carga adicional y opcional. No sustituye a
+`scripts/dataset.sql` ni debe presentarse como la carga inicial del proyecto.
+
+Los scripts de la Fase 6 requieren un binario de k6 con `xk6-sql` y el driver
+de PostgreSQL. El binario se guarda localmente en `k6-tools/`, carpeta ignorada
+por Git. Construirlo desde la raíz del proyecto:
 
 ```bash
-DATABASE_URL='postgres://postgres:CLAVE@IP_HAPROXY:5000/postgres?sslmode=disable' \
-k6 run scripts/carga.js
+mkdir -p k6-tools
+docker run --rm -u "$(id -u):$(id -g)" -v "$(realpath k6-tools):/xk6" grafana/xk6 build v2.0.0 --output /xk6/k6-sql --with github.com/grafana/xk6-sql@v1.2.1 --with github.com/grafana/xk6-sql-driver-postgres@v0.3.1
+./k6-tools/k6-sql version
 ```
 
-Durante la prueba, detener un nodo principal aproximadamente a la mitad de la
-ejecución y registrar operaciones, errores, latencia, RTO y RPO.
+En Node 2, `scripts/ejecutar-carga.sh` lee las credenciales del `.env` local sin
+necesidad de escribir una URL con contraseña en la terminal:
+
+```bash
+# Prueba corta antes de provocar fallas
+VUS=1 DURATION=10s FAILURE_AT_SECONDS=5 ./scripts/ejecutar-carga.sh mixta
+VUS=1 DURATION=10s ./scripts/ejecutar-carga.sh lectura-node3
+
+# Carga mixta oficial: 20 usuarios virtuales durante 2 minutos
+./scripts/ejecutar-carga.sh mixta
+
+# Carga de solo lectura dirigida a Node 3
+./scripts/ejecutar-carga.sh lectura-node3
+```
+
+La carga mixta usa HAProxy en los puertos `5000` para escritura y `5001` para
+lectura. Durante cada escenario se detiene el nodo indicado aproximadamente en
+el segundo 60. La carga de lectura se conecta directamente a Node 3 en el
+puerto `5434` cuando Node 1 y Node 2 están detenidos.
+
+Cada ejecución guarda un resumen JSON en `/tmp/proyecto1-fase6/`. Registrar las
+operaciones totales, exitosas y fallidas; las completadas antes y después de la
+falla; la latencia; la disponibilidad; y el tiempo de recuperación. También se
+deben capturar la terminal de k6 y los estados de Patroni y HAProxy antes,
+durante y después de cada falla.

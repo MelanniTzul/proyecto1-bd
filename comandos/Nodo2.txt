@@ -137,3 +137,95 @@ docker logs pg_node2 --tail 100
 #Mostrar fecha y estado final del clúster
 date
 docker exec -it pg_node2 patronictl -c /etc/patroni.yml list
+
+#==================================================
+# FASE 3
+#==================================================
+docker exec -it pg_node2 patronictl -c /etc/patroni.yml list
+
+docker exec -it pg_node2 patronictl -c /etc/patroni.yml switchover --leader node2 --candidate node1 --force
+
+docker exec -it pg_node2 patronictl -c /etc/patroni.yml list
+
+#Iniciar HAProxy
+docker compose -f docker/docker-compose.haproxy.yml up -d
+docker ps --filter name=haproxy_cluster_ha
+
+#Estado de los nodos
+curl -s 'http://127.0.0.1:8404/stats;csv' | cut -d, -f1,2,18
+
+#Informacion antes de la caida
+docker exec -it pg_node2 psql -h 127.0.0.1 -p 5000 -U postgres -d postgres
+
+INSERT INTO clientes (nombre, correo, telefono)
+  VALUES ('Antes de falla Node 1', 'fase3-antes@prueba.local', '5555-3001')
+  RETURNING *;
+
+#Comprobacion de failover en y haproxy
+date '+Servicio recuperado: %Y-%m-%d %H:%M:%S %Z'
+
+docker exec -it pg_node2 patronictl -c /etc/patroni.yml list
+
+curl -s 'http://127.0.0.1:8404/stats;csv' | cut -d, -f1,2,18
+
+#Comprobacion de dato anterior
+SELECT *
+  FROM clientes
+  WHERE correo = 'fase3-antes@prueba.local';
+
+#Insercion de dato durante la falla.
+INSERT INTO clientes (nombre, correo, telefono)
+  VALUES ('Durante falla Node 1', 'fase3-durante@prueba.local', '5555-3002')
+  RETURNING *;
+  #Acualizacion insert durante la caida
+  UPDATE clientes
+    SET telefono = '5555-3999'
+    WHERE correo = 'fase3-durante@prueba.local'
+    RETURNING *;
+
+  ==========================
+  FASE 4
+  ==========================
+  #Compracion de haproxy antes de la caida
+  docker ps --filter name=haproxy_cluster_ha
+  curl -s 'http://127.0.0.1:8404/stats;csv' | cut -d, -f1,2,18
+
+# Registrar inicio de la caida
+date '+Inicio de falla Node 2: %Y-%m-%d %H:%M:%S %Z'
+
+# Detener Patroni/PosgreSQL
+docker stop pg_node2
+
+# Comprobación
+docker ps -a --filter name=pg_node2
+
+# Detectar caía en HAProxy
+docker ps --filter name=haproxy_cluster_ha
+curl -s 'http://127.0.0.1:8404/stats;csv' | cut -d, -f1,2,18
+
+===============================
+        FASE 5
+===============================
+# Promicion de Nodo 2
+date
+docker exec -it pg_node2 patronictl -c /etc/patroni.yml list
+
+# Caida del nodo 2
+date '+Fase 5 - caída de Node 2: %Y-%m-%d %H:%M:%S %Z'
+docker stop pg_node2
+docker ps -a --filter name=pg_node2
+
+# Comprobacion de que no hay servicio de escritura desde HAProxy
+  curl -s 'http://127.0.0.1:8404/stats;csv' | cut -d, -f1,2,18
+
+# Recuperacion de nodo 2
+date '+Inicio recuperación Node 2: %Y-%m-%d %H:%M:%S %Z'
+docker start pg_node2
+
+#comprobacion de recuperacion
+docker exec -it pg_node2 patronictl -c /etc/patroni.yml list
+
+# Comprobacion de HAProxy
+curl -s 'http://127.0.0.1:8404/stats;csv' | cut -d, -f1,2,18
+
+

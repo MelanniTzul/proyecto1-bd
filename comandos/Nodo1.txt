@@ -201,4 +201,12 @@ docker ps -a --filter name=pg_node1
 date '+Inicio reintegración Node 1: %Y-%m-%d %H:%M:%S %Z'
 docker start pg_node1
 
-sleep 30 && docker exec -it pg_node2 patronictl -c /etc/patroni.yml list
+sleep 30 && docker exec -it pg_node1 patronictl -c /etc/patroni.yml list
+
+# Tiempo de falla
+date '+%Y-%m-%d %H:%M:%S %Z' && docker stop pg_node1
+docker ps --filter name=pg_node1
+
+# Verificacion de promocion de Nodo 1
+
+docker exec -it pg_node1 patronictl -c /etc/patroni.yml list

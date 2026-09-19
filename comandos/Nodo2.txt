@@ -231,3 +231,49 @@ curl -s 'http://127.0.0.1:8404/stats;csv' | cut -d, -f1,2,18
 =====================================
                 Fase 6
 =====================================
+
+------------------------------
+        Escenario A
+------------------------------
+# Comprobación de estado inicial
+curl -s 'http://127.0.0.1:8404/stats;csv' | cut -d, -f1,2,18
+docker exec -it pg_node2 patronictl -c /etc/patroni.yml list
+
+# Cantidad de registros antes de la prueba
+SELECT COUNT(*) FROM clientes;
+
+# Ejecutar carga de datos mixta.
+date && ./scripts/ejecutar-carga.sh mixta
+
+# Medir tiempo de recuperacion
+date && curl -s 'http://127.0.0.1:8404/stats;csv' | cut -d, -f1,2,18
+
+------------------------------
+        Escenario B
+------------------------------
+
+# Inicio de carga Mixta
+date && ./scripts/ejecutar-carga.sh mixta
+
+# Detener nodo 2
+docker stop pg_node2
+
+# Tiempo de recuperación
+date && curl -s 'http://127.0.0.1:8404/stats;csv' | cut -d, -f1,2,18
+
+# Recuperación de nodo 2
+docker start pg_node2
+
+------------------------------
+        Escenario C
+------------------------------
+
+# Estado inicial
+date && curl -s 'http://127.0.0.1:8404/stats;csv' | cut -d, -f1,2,18
+docker exec -it pg_node2 patronictl -c /etc/patroni.yml list
+
+# Detener nodo 2
+docker stop pg_node2
+
+# Inicio de carga de lectura
+date && ./scripts/ejecutar-carga.sh lectura-node3

@@ -228,4 +228,6 @@ docker exec -it pg_node2 patronictl -c /etc/patroni.yml list
 # Comprobacion de HAProxy
 curl -s 'http://127.0.0.1:8404/stats;csv' | cut -d, -f1,2,18
 
-
+=====================================
+                Fase 6
+=====================================

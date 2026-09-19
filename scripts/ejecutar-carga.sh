@@ -16,7 +16,8 @@ show_usage() {
     '' \
     'Variables opcionales:' \
     '  VUS=20 DURATION=2m FAILURE_AT_SECONDS=60 PAUSE_SECONDS=0.1' \
-    '  PROMETHEUS_OUTPUT=1 envia metricas a Prometheus local (Node 2)'
+    '  PROMETHEUS_OUTPUT=1 envia metricas a Prometheus (Node 3 por defecto)' \
+    '  K6_PROMETHEUS_RW_SERVER_URL permite cambiar el destino en otro despliegue'
 }
 
 if [ "$MODE" != 'mixta' ] && [ "$MODE" != 'lectura-node3' ]; then
@@ -66,7 +67,7 @@ printf 'Resumen JSON: %s\n' "$SUMMARY_FILE"
 
 cd "$PROJECT_DIR"
 if [ "${PROMETHEUS_OUTPUT:-0}" = '1' ]; then
-  export K6_PROMETHEUS_RW_SERVER_URL=${K6_PROMETHEUS_RW_SERVER_URL:-http://127.0.0.1:9090/api/v1/write}
+  export K6_PROMETHEUS_RW_SERVER_URL=${K6_PROMETHEUS_RW_SERVER_URL:-http://100.108.44.95:9090/api/v1/write}
   export K6_PROMETHEUS_RW_TREND_STATS='avg,p(95)'
   "$K6_BIN" run --out experimental-prometheus-rw --summary-export "$SUMMARY_FILE" "$SCRIPT"
 else

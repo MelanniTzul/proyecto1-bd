@@ -1,0 +1,118 @@
+{
+  "uid": "proyecto1-cluster-ha",
+  "title": "Proyecto 1 - PostgreSQL HA",
+  "tags": ["postgresql", "patroni", "fase7"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": {"from": "now-15m", "to": "now"},
+  "panels": [
+    {
+      "id": 1,
+      "title": "Recolección de métricas por nodo",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "prometheus-cluster-ha"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [{"refId": "A", "expr": "up{cluster=\"cluster_ha\",job=~\"patroni|postgres|nodes\"}", "legendFormat": "{{node}} {{job}}"}],
+      "fieldConfig": {"defaults": {"min": 0, "max": 1}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}}
+    },
+    {
+      "id": 2,
+      "title": "PostgreSQL disponible (1=si, 0=no)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "prometheus-cluster-ha"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [{"refId": "A", "expr": "pg_up{cluster=\"cluster_ha\"}", "legendFormat": "{{node}}"}],
+      "fieldConfig": {"defaults": {"min": 0, "max": 1}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}}
+    },
+    {
+      "id": 3,
+      "title": "Líder Patroni (1=líder)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "prometheus-cluster-ha"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [{"refId": "A", "expr": "patroni_primary{cluster=\"cluster_ha\"}", "legendFormat": "{{node}}"}],
+      "fieldConfig": {"defaults": {"min": 0, "max": 1}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}}
+    },
+    {
+      "id": 4,
+      "title": "Réplicas en streaming (1=si)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "prometheus-cluster-ha"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [{"refId": "A", "expr": "patroni_postgres_streaming{cluster=\"cluster_ha\"}", "legendFormat": "{{node}}"}],
+      "fieldConfig": {"defaults": {"min": 0, "max": 1}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}}
+    },
+    {
+      "id": 5,
+      "title": "WAL recibido pendiente de replay (bytes)",
+      "description": "Diferencia local entre WAL recibido y aplicado; no mide retraso de red respecto al líder.",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "prometheus-cluster-ha"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "targets": [{"refId": "A", "expr": "clamp_min(patroni_xlog_received_location{cluster=\"cluster_ha\"} - patroni_xlog_replayed_location{cluster=\"cluster_ha\"}, 0)", "legendFormat": "{{node}}"}],
+      "fieldConfig": {"defaults": {"min": 0, "unit": "bytes"}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}}
+    },
+    {
+      "id": 6,
+      "title": "Uso de CPU por nodo (%)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "prometheus-cluster-ha"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+      "targets": [{"refId": "A", "expr": "100 * (1 - avg by (node) (rate(node_cpu_seconds_total{cluster=\"cluster_ha\",mode=\"idle\"}[1m])))", "legendFormat": "{{node}}"}],
+      "fieldConfig": {"defaults": {"min": 0, "max": 100, "unit": "percent"}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}}
+    },
+    {
+      "id": 7,
+      "title": "Uso de memoria por nodo (%)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "prometheus-cluster-ha"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+      "targets": [{"refId": "A", "expr": "100 * (1 - node_memory_MemAvailable_bytes{cluster=\"cluster_ha\"} / node_memory_MemTotal_bytes{cluster=\"cluster_ha\"})", "legendFormat": "{{node}}"}],
+      "fieldConfig": {"defaults": {"min": 0, "max": 100, "unit": "percent"}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}}
+    },
+    {
+      "id": 8,
+      "title": "Transacciones confirmadas por segundo",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "prometheus-cluster-ha"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+      "targets": [{"refId": "A", "expr": "rate(pg_stat_database_xact_commit{cluster=\"cluster_ha\",datname=\"postgres\"}[1m])", "legendFormat": "{{node}}"}],
+      "fieldConfig": {"defaults": {"min": 0, "unit": "ops"}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}}
+    },
+    {
+      "id": 9,
+      "title": "Latencia p95 de k6 (ms)",
+      "description": "Disponible al ejecutar k6 con PROMETHEUS_OUTPUT=1.",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "prometheus-cluster-ha"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32},
+      "targets": [
+        {"refId": "A", "expr": "k6_latencia_lectura_ms_seconds_p95 * 1000 or k6_latencia_lectura_ms_p95", "legendFormat": "lectura {{periodo}}"},
+        {"refId": "B", "expr": "k6_latencia_escritura_ms_seconds_p95 * 1000 or k6_latencia_escritura_ms_p95", "legendFormat": "escritura {{periodo}}"}
+      ],
+      "fieldConfig": {"defaults": {"min": 0, "unit": "ms"}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}}
+    },
+    {
+      "id": 10,
+      "title": "Operaciones fallidas por segundo (k6)",
+      "description": "Disponible al ejecutar k6 con PROMETHEUS_OUTPUT=1.",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "prometheus-cluster-ha"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32},
+      "targets": [{"refId": "A", "expr": "rate(k6_operaciones_fallidas_total[30s]) or rate(k6_lecturas_fallidas_total[30s])", "legendFormat": "{{operacion}} {{periodo}}"}],
+      "fieldConfig": {"defaults": {"min": 0, "unit": "ops"}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}}
+    }
+  ]
+}

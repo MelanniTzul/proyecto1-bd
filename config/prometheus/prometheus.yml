@@ -8,18 +8,30 @@ global:
 scrape_configs:
   - job_name: postgres
     static_configs:
-      - targets:
-          - 100.120.213.18:9187 # postgres_exporter - Nodo 1
-          - 100.87.77.76:9187   # postgres_exporter - Nodo 2
-          - 100.108.44.95:9187   # postgres_exporter - Nodo 3
-        labels:
-          cluster: cluster_ha
+      - targets: ['100.120.213.18:9187']
+        labels: {cluster: cluster_ha, node: node1}
+      - targets: ['100.87.77.76:9187']
+        labels: {cluster: cluster_ha, node: node2}
+      - targets: ['100.108.44.95:9187']
+        labels: {cluster: cluster_ha, node: node3}
 
   - job_name: nodes
     static_configs:
-      - targets:
-          - 100.120.213.18:9100 # node_exporter - Nodo 1
-          - 100.87.77.76:9100   # node_exporter - Nodo 2
-          - 100.108.44.95:9100   # node_exporter - Nodo 3
-        labels:
-          cluster: cluster_ha
+      - targets: ['100.120.213.18:9100']
+        labels: {cluster: cluster_ha, node: node1}
+      - targets: ['100.87.77.76:9100']
+        labels: {cluster: cluster_ha, node: node2}
+      - targets: ['100.108.44.95:9100']
+        labels: {cluster: cluster_ha, node: node3}
+
+  # Patroni publica rol, estado PostgreSQL y avance WAL en /metrics.
+  - job_name: patroni
+    metrics_path: /metrics
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['100.120.213.18:8008']
+        labels: {cluster: cluster_ha, node: node1}
+      - targets: ['100.87.77.76:8008']
+        labels: {cluster: cluster_ha, node: node2}
+      - targets: ['100.108.44.95:8008']
+        labels: {cluster: cluster_ha, node: node3}

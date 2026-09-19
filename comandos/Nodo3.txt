@@ -116,3 +116,46 @@ docker exec -it pg_node3 psql -U postgres -p 5434 -d postgres -c "SELECT * FROM 
 
 #Mostrar los 100 logs más recientes del Nodo 3
 docker logs pg_node3 --tail 100
+
+#==================================================
+# CAIDA DEL NODO 2
+#==================================================
+#Comprobacion en nodo 3 de la insercion del dato insertado por nodo 1
+  SELECT *
+  FROM clientes
+  WHERE correo = 'fase4-durante@prueba.local';
+
+#Comprobacion en nodo 3 de la actualizacion del dato insertado por nodo 1
+  SELECT *
+  FROM clientes
+  WHERE correo = 'fase4-durante@prueba.local';
+
+
+#==================================================
+#  FASE 5
+#==================================================
+
+# Comprobacion del estado de emergencia
+ date
+ docker exec -it pg_node3 patronictl -c /etc/patroni.yml list
+
+# Comprobacion del puerto de escritura
+docker exec pg_node3 pg_isready -h 100.87.77.76 -p 5000 -t 10
+
+# Entrar a la terminal de la db en docker
+docker exec -it pg_node3 psql -U postgres -p 5434 -d postgres
+
+# Comprobacion de lecturas
+SELECT COUNT(*) AS clientes
+FROM clientes;
+
+# Comprobacion de escrituras bloqueadas
+INSERT INTO clientes (nombre, correo, telefono)
+VALUES ('Intento Fase 5', 'fase5@prueba.local', '5555-5000');
+
+# Comprobacion de replicacion en nodo 3
+SELECT *
+  FROM clientes
+  WHERE correo = 'fase5-recuperacion@prueba.local';
+
+
